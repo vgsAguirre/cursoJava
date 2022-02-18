@@ -29,3 +29,560 @@ build/
 
 ### VS Code ###
 .vscode/
+
+--ANOTACOES:
+-- Oracle pesquisar tabelas em qualquer parte do banco oracle.
+
+SELECT OWNER||'.'||NAME,LINE,TEXT
+  FROM ALL_SOURCE
+WHERE TYPE IN ('TRIGGER','FUNCTION','PACKAGE BODY','PROCEDURE')
+   AND UPPER(TEXT) LIKE UPPER('%tab_banco%')
+   
+-- JPA VALIDACOES:
+https://www.devmedia.com.br/hibernate-validator-validando-dados-no-back-end-com-anotacoes/37979
+
+EX:
+
+@NotNull(message = "Codigo é obrigatório")
+private int codigo;
+
+@NotEmpty(message = "Nome do vinho é obrigatório")
+private String nome;
+
+@NotNull(message = "Volume é obrigatório em mL")
+@Range(min=30,max=2000,message="A qde de liquido varia entre 30ml e 2000ml")
+private Integer volume;
+
+@Digits(integer=3,fraction=2,message="Apenas centenas e 2 casas após o ponto.")
+private BigDecimal preco;
+
+@NotNull
+private TipoVinho tipo;
+
+@Past(message = "A data deve estar no passado.")
+private Instant data_engarrafamento;
+
+@NotEmpty(message = "Número do lote deve ser informado.")
+@Pattern(regexp = "\\d\\p{Upper}{2}\\d\\p{Upper}", message = "Padrão do lote deve ser obedecido.")
+private String lote;
+
+@Size(min=4,max=20,message="Descrição deve ter no máximo {max} caracteres e no minimo" + " {min} caracteres. Você digitou: " + "${validatedValue}")
+private String descricao;
+
+@NotEmpty (message = "Informe um valor para a origem do Vinho.")
+private String origem;
+
+-- NPM:
+npm -v -> verificar a versão
+npm init ->  criar o arquivo package.json de um projeto
+npm install -> instalar as dependências
+npm install express -> instalar o módulo Express 
+npm start -> 
+
+--ESTUDOS:
+Spring Data JPA :  
+Injeção de dependencia : https://blog.algaworks.com/injecao-de-dependencias-com-spring/
+MANIPULANDO XML: https://www.devmedia.com.br/apache-poi-manipulando-documentos-em-java/31778
+
+EXPRESSAO REGULAR:
+https://pt.infobyip.com/regularexpressioncalculator.php
+
+Expresssão:	 ^(.{2})\S{1}(.{5})\S{1}(.{8})\S{1}(.{2})\S{1}$
+
+Texto: 		11;22222;33333333;44;
+
+Saída:
+	Match Id	Full Match				Group 1		Group 2		Group 3		Group 4
+	0			11;22222;33333333;44;	11			22222		33333333	44
+	
+	
+	
+Rule	Meaning
+^	corresponde início da linha
+$	corresponde ao fim da linha
+*	coincide com os anteriores personagem 0 ou mais vezes
++	coincide com os anteriores caráter 1 ou mais vezes
+?	combina com o caractere 0 ou 1 hora anterior
+.	matches any single character except newtdne
+(x)	matches x e lembra-se do expresssion correspondência
+(?:x)	matches x e não se lembra do expresssion correspondência
+x(?=y)	matches x se for seguido por y
+x(?!y)	matches x se não for seguido por y
+{n}	jogos de caráter repetido n vezes anteriores
+{n,m}	jogos personagem anterior repetido entre N e m vezes
+[abc]	corresponde a qualquer caractere único nas faixas
+[^abc]	corresponde a qualquer caractere único que não nos suportes
+\b	corresponde limite de palavra
+\B	corresponde limite não-palavra
+\d	corresponde a um dígito
+\D	corresponde a uma não-dígitos
+\s	corresponde a um caractere de espaço em branco
+\S	corresponde a um caractere não-branco
+\t	corresponde a uma aba
+\w	matches an alphanumeric character or underscore
+\W	jogos personagem que não corresponde \w
+
+
+Exemplos de expressões regulares
+Expression	Meaning
+
+[0-9]{4}	corresponde a um ano, exemplo: 2010
+[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}.[0-9]{1,3}	corresponde a um endereço IP, por exemplo: 192.168.10.1.
+([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}	corresponda ao nome de domínio, um exemplo: www.yahoo.com	
+
+EX: leitura de arquivos:
+
+	private void listarArquivosDiretorio(String caminhoArquivos, String caminhoSaida, String caminhoArquivosProcessados)
+			throws Exception {
+		try {
+
+			log.info("Dir entrada: " + caminhoArquivos);
+			log.info("Dir saida: " + caminhoSaida);
+			log.info("Dir processado: " + caminhoArquivosProcessados);
+
+			// Lista o nome dos arquivos a serem processados
+			File arquivos = new File(caminhoArquivos);
+			for (File file : arquivos.listFiles()) {
+
+				log.info("Arquivo: " + file.getPath());
+
+				// Zera a variavel para iniciar as exceções do arquivo atual
+				exceptionList = new ArrayList<>();
+				// Zera a lista de detalhes para registras os detalhes do novo arquivo
+				listaDetail = new ArrayList<>();
+
+				arquivo = new TabTrocaArquivos();
+				arquivo.setNmArquivo(file.toString());
+				arquivo.setDtProcessamento(new Date());
+				arquivo.setNrRegistros(new BigInteger("0")); // Inicializo passando zero, depois o campo irá receber o
+																// total de linhas.
+				arquivo.setDsTpSentido("RECEBENDO");
+
+				try {
+					int posicaoInicial = file.getPath().lastIndexOf("0");
+
+					// achou o arquivo com extenção no final
+					if (posicaoInicial != -1) {
+
+						posicaoInicial = file.getPath().indexOf("CARTAO");
+
+						String tipoArquivo = file.getPath().substring(posicaoInicial);
+						arquivo.setDsTpArquivo(tipoArquivo);
+
+						if (tipoArquivo.contains("CARTAO")) { // if (tipoArquivo.equals(".RET")) {
+							try {
+								// Enviar a lista de nome dos arquivos para serem lidos: (FILTRO PELO TIPO DOS
+								// DOCUMENTO: SEM TIPO.)
+
+								this.trocaArquivoRepository.save(arquivo);
+
+								this.lerDadosArquivos(file.getPath());
+								arquivo.setStProcessamento(StatusProcessamentoEnum.PROCESSADO_COM_SUCESSO.value());
+
+								TabTrocaArquivos last = this.trocaArquivoRepository.findLastIdArquivo();
+
+								if (last == null)
+									throw new Exception("Erro ao inserir o arquivo");
+
+								this.salvaDetail(last);
+
+								RetornoFisHeaderDTO retornoFisHeaderDTO = new RetornoFisHeaderDTO();
+								RetornoFisTraillerDTO retornoFisTraillerDTO = new RetornoFisTraillerDTO();
+								// RetornoBradescoDTO retornoBradescoDTO = new RetornoBradescoDTO();
+
+								List<RetornoBradescoDTO> listaRetornoDetailDTO = new ArrayList<>();
+
+								retornoFisHeaderDTO = this.geraHeader(last);
+								listaRetornoDetailDTO = this.geraDetail(last);
+								retornoFisTraillerDTO = this.geraTrailler(last);
+
+								SimpleDateFormat formato = new SimpleDateFormat("ddMMyyyy");
+								String dataFormatada = formato.format(new Date());
+
+								// GERA ARQUIVO DE RETORNO PARA A FIS. /////////////////////////////////////
+								// FileOutputStream fs = new FileOutputStream("C:\\ARQUIVO_GERADO_FIS\\FIS_" +
+								// dataFormatada + ".RET");
+//								FileOutputStream fs = new FileOutputStream("C:\\ARQUIVO_GERADO_FIS\\PDFXCD.FNP.H.BRCHCNAR.BXH667D.TRI01(+1)."+ dataFormatada);
+
+								FileOutputStream fs = new FileOutputStream(caminhoSaida + "/"
+										+ "PDFXCD.FNP.H.BRCHCNAR.BXH667D.TRI01(+1)." + dataFormatada);
+
+								OutputStreamWriter os = new OutputStreamWriter(fs);
+
+								os.write(retornoFisHeaderDTO.retornaDadosFisHeader());
+								os.write("\n");
+
+								for (RetornoBradescoDTO l : listaRetornoDetailDTO) {
+									os.write(l.retornaDadosFisDetail());
+									os.write("\n");
+								}
+
+								os.write(retornoFisTraillerDTO.retornaDadosFisTrailler());
+								os.close();
+								fs.close();
+
+							} catch (Exception e) {
+								arquivo.setStProcessamento(StatusProcessamentoEnum.PROCESSADO_COM_ERRO.value());
+
+								arquivo.setFlErro('F');
+								exceptionList.add(e.getMessage());
+								throw new Exception();
+							}
+
+							this.trocaArquivoRepository.save(arquivo);
+
+							if (exceptionList.size() > 0) {
+								throw new Exception();
+							}
+
+							TabTrocaArquivos last = this.trocaArquivoRepository.findLastIdArquivo();
+							if (last == null)
+								throw new Exception("Erro ao inserir o arquivo");
+							this.salvaDetail(last);
+
+						} else {
+							exceptionList.add("Tipo de Arquivo incompativel");
+							throw new Exception();
+						}
+					} else {
+						exceptionList.add("Arquivo sem extensão.");
+						throw new Exception();
+					}
+
+				} catch (Exception e) {
+
+					// Erros relacionados ao arquivo atual
+					arquivo.setFlErro('T');
+
+					this.trocaArquivoRepository.save(arquivo);
+
+					TabTrocaArquivos last = this.trocaArquivoRepository.findLastIdArquivo();
+					TabExcessao exceptionError = new TabExcessao();
+
+					for (String exception : this.exceptionList) {
+
+						exceptionError.setTabTrocaArquivosIdArquivo(last);
+						exceptionError.setDsMensagem(exception);
+
+						this.excessaoRepository.save(exceptionError);
+					}
+				}
+			}
+
+			// MOVER OS ARQUIVOS PROCESSADOS PARA UMA PASTA.
+//			moveArquivos.moveArquivosProcessados("C:\\LER_ARQUIVOS\\RETORNO PAGAMENTO BRADESCO","C:\\LER_ARQUIVOS\\RETORNO PAGAMENTO BRADESCO PROCESSADOS");
+			moveArquivos.moveArquivosProcessados(caminhoArquivos, caminhoArquivosProcessados);
+
+		} catch (Exception e) {
+			throw new Exception(e.getMessage());
+		}
+	}
+	
+	
+	private void lerDadosArquivos(String caminho) throws Exception {
+		try {
+			// total linhas arquivo
+			BufferedReader bflinhas = new BufferedReader(new FileReader(caminho));
+			Long totalLinhas = bflinhas.lines().count();
+			bflinhas.close();
+			
+			arquivo.setNrRegistros(new BigInteger(totalLinhas.toString()));
+
+			// ler arquivo
+			BufferedReader bf = new BufferedReader(new FileReader(caminho));
+			String linha = bf.readLine();
+			long countLinha = 1;
+
+			while (linha != null) {
+				if (!linha.trim().isEmpty()) {
+					try {
+						// Valida HEADER
+						if (countLinha == 1) {
+							this.setCamposHeader(linha);
+						} else
+						// Valida TRAILLER
+						if (countLinha == totalLinhas) {
+							this.setCamposTrailler(linha);
+						} else
+						// VALIDA DETAIL
+						if (countLinha > 1 && countLinha < totalLinhas) {
+							this.setCamposDetail(linha);
+						}
+					} catch (Exception e) {
+						exceptionList.add("Error Linha [" + countLinha + "] : " + e.getMessage());
+					}
+				} else {
+					exceptionList.add("Erro: A linha: " + countLinha + " está em branco.");
+				}
+				linha = bf.readLine();
+				countLinha++;
+			}
+
+			bf.close();
+
+		} catch (IOException e) {
+			throw new Exception("Arquivo não pode ser lido");
+		}
+	}
+	
+	private void setCamposHeader(String linha) throws Exception {
+
+		String camposHeader = this.getPattherHeader();
+
+		Pattern patternHeader = Pattern.compile(camposHeader);
+		Matcher matcherheader = patternHeader.matcher(linha);
+
+		if (matcherheader.matches()) {
+			arquivo.setInfoHeader(matcherheader.group(0));
+		} else {
+			throw new Exception("Erro ao montar Cabeçalho.");
+		}
+	}
+
+	private void setCamposTrailler(String linha) throws Exception {
+
+		String camposTrailler = this.getPattherTrailler();
+
+		Pattern patternTrailler = Pattern.compile(camposTrailler);
+		Matcher matcherTrailler = patternTrailler.matcher(linha);
+
+		if (matcherTrailler.matches()) {
+			arquivo.setInfoTrailler(matcherTrailler.group(0));
+		} else {
+			throw new Exception("Erro ao montar Rodapé.");
+		}
+	}
+	
+	protected String getPattherTrailler() {
+
+		// TRAILLER: 14 CAMPOS
+
+		String trailler = "^(.{1})(.{1})(.{2})(.{3})(.{10})(.{8})(.{14})(.{8})(.{10})(.{80})"
+				+ "(.{8})(.{14})(.{235})(.{6})$"; // 400
+
+		return trailler;
+	}
+	
+	protected RetornoFisTraillerDTO geraTrailler(TabTrocaArquivos last) throws Exception {
+
+		String linha = last.getInfoTrailler();
+
+		String camposTrailler = this.getPattherTrailler();
+
+		Pattern patternHeader = Pattern.compile(camposTrailler);
+		Matcher matcherheader = patternHeader.matcher(linha);
+
+		if (!matcherheader.matches()) {
+			throw new Exception("Erro ao montar Trailler Fis.");
+		}
+
+		// Monta Trailler Retorno Arquivo FIS
+		RetornoFisTraillerDTO retornoFisTraillerDTO = new RetornoFisTraillerDTO();
+
+		retornoFisTraillerDTO.setIdRegistro(matcherheader.group(1)); // 9(001)
+		retornoFisTraillerDTO.setIdRetorno(matcherheader.group(2)); // 9(001)
+		retornoFisTraillerDTO.setIdTipoRegistro(matcherheader.group(3)); // (002)
+		retornoFisTraillerDTO.setCodBanco(matcherheader.group(4)); // 9(003)
+		retornoFisTraillerDTO.setExtra(padRight(" ", 10)); // X(010)
+		retornoFisTraillerDTO.setQtTulosCobranca(matcherheader.group(6)); // 9(008)
+		retornoFisTraillerDTO.setVlTotalCobranca(matcherheader.group(7)); // 9(012)V99 = (014)
+		retornoFisTraillerDTO.setNrAvisoBancario(padRight(" ", 8)); // 9(008)
+		retornoFisTraillerDTO.setExtra2(padRight(" ", 10)); // X(010)
+		retornoFisTraillerDTO.setQtRegistroEntrada(padRight("0", 5)); // 9(005)
+		retornoFisTraillerDTO.setVlRegistroConfEntrada(padRight("0", 12)); // 9(010)V99 = (012)
+		retornoFisTraillerDTO.setVlRegistroLiquidacao(padRight("0", 12)); // 9(010)V99 = (012)
+		retornoFisTraillerDTO.setQtRegistrosLiquidacao(padRight("0", 5)); // 9(005)
+		retornoFisTraillerDTO.setVlRegistros(padRight("0", 12)); // 9(010)V99 = (012)
+		retornoFisTraillerDTO.setQtTitulosBaixados(padRight("0", 5)); // 9(005)
+		retornoFisTraillerDTO.setVlTitulosBaixados(padRight("0", 12)); // 9(010)V99 = (012)
+		retornoFisTraillerDTO.setQtTitulosAbatimentoCancelado(padRight("0", 5)); // 9(005)
+		retornoFisTraillerDTO.setVlTitulosAbatimentoCancelado(padRight("0", 12)); // 9(010)V99 = (012)
+		retornoFisTraillerDTO.setQtRegistroVencimentoAlterado(padRight("0", 5)); // 9(005)
+		retornoFisTraillerDTO.setVlRegistroVencimentoAlterado(padRight("0", 12)); // 9(010)V99 = (012)
+		retornoFisTraillerDTO.setQtRegistroAbatimentoConcedido(padRight("0", 5)); // 9(005)
+		retornoFisTraillerDTO.setVlRegistroAbatimentoConcedido(padRight("0", 12)); // 9(010)V99 = (012)
+		retornoFisTraillerDTO.setQtRegistroConfInstrProtesto(padRight("0", 5)); // 9(005)
+		retornoFisTraillerDTO.setVlRegistroConfInstrProtesto(padRight("0", 12)); // 9(010)V99 = (012)
+		retornoFisTraillerDTO.setExtra3(padRight(" ", 174)); // X(174)
+		retornoFisTraillerDTO.setVlTotalRateio(padRight("0", 15)); // 9(013)V99 = (015)
+		retornoFisTraillerDTO.setQtTotalRateio(padRight("0", 8)); // 9(008)
+		retornoFisTraillerDTO.setExtra4(padRight(" ", 9)); // X(009)
+		retornoFisTraillerDTO.setNrSequencial(matcherheader.group(14)); // 9(006)
+
+		return retornoFisTraillerDTO;
+
+	}
+	
+	public void setCamposDetail(String linha) throws Exception {
+
+		// DETAIL: 38 CAMPOS
+
+		String detail = "^(.{1})(.{2})(.{14})(.{20})(.{12})(.{13})(.{12})(.{33})(.{1})(.{2})"
+				+ "(.{6})(.{10})(.{20})(.{6})(.{13})(.{3})(.{5})(.{2})(.{13})(.{13})"
+				+ "(.{13})(.{13})(.{13})(.{13})(.{13})(.{13})(.{13})(.{3})(.{6})(.{13})"
+				+ "(.{6})(.{13})(.{2})(.{2})(.{54})(.{2})(.{1})(.{6})$"; // 400
+
+		Pattern patternDetail = Pattern.compile(detail);
+		Matcher matcherDetail = patternDetail.matcher(linha);
+
+		if (!matcherDetail.matches()) {
+			throw new Exception("Erro ao montar Detail.");
+		}
+		
+		protected List<RetornoBradescoDTO> geraDetail(TabTrocaArquivos last) throws Exception {
+
+		// TabRetornoBradesco detailArquivo = new TabRetornoBradesco();
+
+		List<TabRetornoBradesco> listaTabRetornoBradesco = new ArrayList<>();
+		List<RetornoBradescoDTO> listaRetornoBradescoDTO = new ArrayList<>();
+
+		listaTabRetornoBradesco = retornoBradescoRepository.findByIdArquivo(last.getIdArquivo());
+
+		if (!listaTabRetornoBradesco.isEmpty()) {
+
+			for (TabRetornoBradesco l : listaTabRetornoBradesco) {
+
+				RetornoBradescoDTO retornoBradescoDTO = new RetornoBradescoDTO();
+
+				retornoBradescoDTO.setIdRegistro(l.getIdRegistroDetalhe()); // 9(001)
+				retornoBradescoDTO.setIdTipoRegistroEmpresa(l.getIdTipoRegistroCliente()); // 9(002)
+				retornoBradescoDTO.setNrInscricaoEmpresa(l.getNrInscricaoCliente()); // 9(014)
+				retornoBradescoDTO.setExtra(padRight("0", 3)); // 9(003)
+
+				retornoBradescoDTO.setIdEmpresaCedenteBanco(l.getIdEmpresaBanco().substring(0, 17)); // X(017)
+
+				String nossoNumero = l.getIdTituloEmpresa().trim();
+
+				String digitoVerificador = "";
+
+				TabNvCobCartao tabNvCobCartao = tabNvCobCartaoRepository.findByNossoNum(Integer.parseInt(nossoNumero));
+
+				digitoVerificador = tabNvCobCartao != null ? tabNvCobCartao.getDigNosNum().toString() : "@";
+
+				int tamanhoNossoNumero = 12 - (nossoNumero.length() + 1);
+
+				int tamanhoIdTituloEmpresa = 25 - (tamanhoNossoNumero + nossoNumero.length() + 1);
+
+				l.setIdTituloEmpresa(padRight("0", tamanhoNossoNumero) + nossoNumero + digitoVerificador);
+
+				retornoBradescoDTO
+						.setNrControleParticipante(padRight(" ", tamanhoIdTituloEmpresa) + l.getIdTituloEmpresa()); // X(025)
+
+				retornoBradescoDTO.setExtra1(padRight("0", 8)); // 9(008)
+				retornoBradescoDTO.setIdTituloBanco(l.getIdTituloEmpresa()); // X(012)
+				retornoBradescoDTO.setExtra3(padRight(" ", 10)); // X(010)
+				retornoBradescoDTO.setExtra4(padRight(" ", 12)); // X(012)
+				retornoBradescoDTO.setIdRateioCredito("R"); // X(001)
+				retornoBradescoDTO.setExtra5(padRight("0", 2)); // 9(002)
+				retornoBradescoDTO.setCarteira(l.getIdCarteiraBanco()); // 9(001)
+				retornoBradescoDTO.setIdOcorrencia(l.getIdOcorrencia()); // 9(002)
+				retornoBradescoDTO.setDtOcorrenciaBanco(l.getDtProcessamento()); // 9(006)
+
+				int nrDocumento = 10
+						- (l.getIdTituloEmpresa().trim().substring(3, l.getIdTituloEmpresa().length()).length());
+
+				retornoBradescoDTO.setNrDocumento(padRight("0", nrDocumento)
+						+ l.getIdTituloEmpresa().trim().substring(3, l.getIdTituloEmpresa().length())); // X(010)
+
+				int idEmpresaCedenteBanco = 20 - (l.getIdTituloEmpresa().length());
+
+				retornoBradescoDTO.setIdTituloBanco2(padRight(" ", idEmpresaCedenteBanco) + l.getIdTituloEmpresa()); // X(020)
+				retornoBradescoDTO.setDtVencimentoTitulo(l.getDtVencimentoTitulo()); // 9(006)
+				retornoBradescoDTO.setVlTitulo(l.getVlNominalTitulo()); // 9(011)V99 = (013)
+				retornoBradescoDTO.setBancoCobrador(l.getNrBancoCompensacao()); // 9(003)
+				retornoBradescoDTO.setAgenciaCobradora(l.getDsAgenciaCobranca()); // 9(005)
+				retornoBradescoDTO.setEspecieTitulo(l.getIdEspecieTitulo()); // 9(002)
+				retornoBradescoDTO.setVlDespesaCobranca(l.getVlTarifaCobranca()); // 9(011)V99 = (013)
+				retornoBradescoDTO.setVlOutrasDespesasCustasProtestos(l.getVlOutrasDespesas()); // 9(011)V99 = (013)
+				retornoBradescoDTO.setVlJurosOperacoesAtraso(padRight("0", 13)); // 9(011)V99 = (013)
+				retornoBradescoDTO.setVlIofDevido(padRight("0", 13)); // 9(011)V99 = (013)
+				retornoBradescoDTO.setVlAbatimentoConcedido(padRight("0", 13)); // 9(011)V99 = (013)
+				retornoBradescoDTO.setVlDescontoConcedido(padRight("0", 13)); // 9(011)V99 = (013)
+				retornoBradescoDTO.setVlPago(l.getVlPago()); // 9(011)V99 = (013)
+				retornoBradescoDTO.setVlJurosMora(padRight("0", 13)); // 9(011)V99 = (013)
+				retornoBradescoDTO.setVlOutrosCreditos(padRight("0", 13)); // 9(011)V99 = (013)
+				retornoBradescoDTO.setExtra6(padRight(" ", 2)); // X(002)
+				retornoBradescoDTO.setMotivoCodOcorrencia19(" "); // X(001)
+				retornoBradescoDTO.setDtCredito(l.getDtLiquidacaoTitulo()); // 9(006)
+				retornoBradescoDTO.setOrigemPagamento(padRight("0", 3)); // 9(003)
+				retornoBradescoDTO.setExtra7(padRight(" ", 10)); // X(010)
+				retornoBradescoDTO.setFgChequeBradesco(padRight("0", 4)); // 9(004)
+				retornoBradescoDTO.setMotivoRejeicao(padRight("0", 10)); // 9(002) X 5 = (010)
+				retornoBradescoDTO.setExtra8(padRight(" ", 66)); // X(066)
+				retornoBradescoDTO.setNrSequencial(l.getDsNrSequencial()); // 9(006)
+
+				listaRetornoBradescoDTO.add(retornoBradescoDTO);
+			}
+		}
+
+		return listaRetornoBradescoDTO;
+	}
+	
+	--Preencher com 0 ou espaços.
+	protected String padRight(String s, int n) {
+
+		String retorno = "";
+
+		if (s.equals("0")) {
+			retorno = String.format("%0" + n + "d", Integer.parseInt(s));
+		} else {
+			retorno = String.format("%-" + n + "." + n + "s", s);
+		}
+		return retorno;
+	}
+	
+-- Create sequence
+create sequence TAB_TROCA_ARQUIVOS_SEQ
+minvalue 1
+maxvalue 9999999999
+start with 140
+increment by 1
+cache 20;
+
+--na entity
+@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "NOME_SEQUENCE")
+@SequenceGenerator(sequenceName = "NOME_SEQUENCE", allocationSize = 1, name = "NOME_SEQUENCE")
+
+
+-- DATA:
+
+Date JAVA
+
+Date: numero long que guarda a quantidade de milisegndos.
+
+#SimpleDateFormat
+
+Define a conversão entre Date e String
+
+dd/MM/yyyy -> 23/07/2018
+
+dd/MM/yyyy HH:mm:ss -> 23/07/2018 15:42:07
+
+Padrão ISO 8601 e classe Instant
+
+*formato yyyy-MM-ddTHH:mm:ssZ (Z = informa que é um horário UTC)
+Boa prática armazenar a hora como UTC.
+
+Date y3 = Date.from(Instant.parse("2018-06-25T15:42:07Z"));
+
+-- ### COMO USAR TABELAS DE OUTRO SCHEMA NO ATUAL
+
+Comando:
+```
+grant select on {SCHEMA_DESEJADO}.{TABELA_DESEJADA} to {SCHEMA_ATUAL};
+create or replace synonym {SCHEMA_ATUAL}.{TABELA_DESEJADA} for {SCHEMA_DESEJADO}.{TABELA_DESEJADA};
+```
+
+Legenda:  
+SCHEMA_DESEJADO: Esquema externo onde esta a informação desejada  
+TABELA_DESEJADA: Tabela externa onde esta a informação desejada  
+SCHEMA_ATUAL: Esquema onde esta (seja acesso)
+
+Exemplo:  
+Estou no esquema "NBC_CLIENTE" e desejo acesso a tabela de "CLIENTES" presentes no schema "WILSON1"
+
+SCHEMA_DESEJADO: WILSON1
+TABELA_DESEJADA: CLIENTES
+SCHEMA_ATUAL: NBC_CLIENTE
+
+-- 
